@@ -29,13 +29,33 @@ local _M = {
     -- 防火墙开关
     config_waf_enable = "on",
     -- 日志文件存放目录 结尾不带/
-    config_log_dir = "/var/log/nginx",
+    config_log_dir = "/usr/local/openresty/nginx/logs",
     -- 规则文件存放目录 结尾不带/
     config_rule_dir = "/usr/local/openresty/nginx/conf/nginx-lua-waf/rules",
 
+    -- 处理方式 redirect/html/log  log只记录日志
+    config_waf_model = "log",
+
+    -- 当配置为redirect时跳转到的URL
+    config_waf_redirect_url = "http://www.baidu.com",
+
+    -- bad_guys过期时间
+    config_expire_time = 60,
+
+    -- 当配置为html时 显示的内容
+    config_output_html = [[
+    <html>
+    <head><title>403 Forbidden</title></head>
+    <body>
+    <center><h1>403 Forbidden</h1></center>
+    <hr><center>openresty</center>
+    </body>
+    </html>
+    ]],
+
 --01假数据时不进行后续流程，非正则匹配
     -- 频率控制开关
-    frequency_control_check = "on",
+    frequency_control_check = "off",
     -- 频率控制中返回空数据内容
     frequency_text = [[{"status":"ok"}]],
 
@@ -43,7 +63,7 @@ local _M = {
     -- IP白名单开关
     config_white_ip_check = "on",
 
---03返回403
+--03WAF处理:跳转/html/仅日志
     -- IP黑名单开关
     config_black_ip_check = "on",
 
@@ -59,11 +79,11 @@ local _M = {
     -- URL过滤开关
     config_url_check = "on",
 
---07返回403记录limit
+--07WAF处理:跳转/html/仅日志
     -- CC攻击过滤开关
     config_cc_check = "on",
     -- 设置CC攻击检测依据 攻击阈值/检测时间段
-    config_cc_rate = "3000/60",
+    config_cc_rate = "10/10",
 
 --08WAF处理:跳转/html/仅日志
     -- Cookie过滤开关
@@ -76,38 +96,6 @@ local _M = {
 --10WAF处理:跳转/html/仅日志
     -- POST过滤开关
     config_post_check = "on",
-    -- 处理方式 redirect/html/log  log只记录日志
-    config_waf_model = "log",
-    -- 当配置为redirect时跳转到的URL
-    config_waf_redirect_url = "http://www.baidu.com",
-    -- bad_guys过期时间
-    -- config_expire_time = 600,
-    -- 当配置为html时 显示的内容
-    config_output_html = [[
-    <html>
-    <head>
-    <meta charset="UTF-8">
-    <title>LEPEI WAF</title>
-    </head>
-      <body>
-        <div>
-      <div class="table">
-        <div>
-          <div class="cell">
-            您的IP为: %s
-          </div>
-          <div class="cell">
-            已触发WAF规则
-          </div>
-          <div class="cell">
-            实际使用请修改此提示信息
-          </div>
-        </div>
-      </div>
-    </div>
-      </body>
-    </html>
-    ]],
 }
 
 return _M
