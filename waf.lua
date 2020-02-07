@@ -54,11 +54,20 @@ function _M.black_ip_check()
     if config.config_black_ip_check == "on" then
         local IP_BLACK_RULE = _M.get_rule('blackip.rule')
         local BLACK_IP = ngx.var.server_name.."-"..util.get_client_ip()
+
+        -- 自动封禁的黑名单IP
+        if util.bad_guy_check() then
+            util.log_record(config.config_log_dir, '黑名单IP(临时)', ngx.var.request_uri, "_", rule)
+            util.waf_output()
+            return true
+        end
+
+        -- 匹配规则中黑名单IP
         if IP_BLACK_RULE ~= nil then
             for _, rule in pairs(IP_BLACK_RULE) do
-                if rule ~= "" and rulematch(BLACK_IP, rule, "jo") then
+                if (rule ~= "" and rulematch(BLACK_IP, rule, "jo")) then
                     util.log_record(config.config_log_dir, '黑名单IP', ngx.var.request_uri, "_", rule)
-                    ngx.exit(403)
+                    util.waf_output()
                     return true
                 end
             end
@@ -135,7 +144,9 @@ function _M.cc_attack_check()
         if req then
             if req > CCcount then
                 util.log_record(config.config_log_dir, 'CC攻击', ngx.var.request_uri, "-", "-")
-                ngx.exit(403)
+                util.waf_output()
+                return true
+                -- ngx.exit(403)
             else
                 limit:incr(CC_TOKEN, 1)
             end
@@ -248,33 +259,6 @@ function _M.post_attack_check()
     return false
 end
 
---[[
--- 镜花水月模式
--- 检查来访IP是否为标记过的恶意IP
-function _M.bad_guy_check()
-    local client_ip = util.get_client_ip()
-    local ret = false
-    if client_ip ~= "" then
-        ret = ngx.shared.badGuys.get(client_ip)
-        if ret ~= nil and ret > 0 then
-            ret = true
-        end
-    end
-    return ret
-end
-
--- 镜花水月模式
--- 获取来访请求头中目标Host字段，并设置为target变量
--- 如果该IP被标注为恶意IP 则改写target变量 使其路由到测试环境
-function _M.start_jingshuishuiyue()
-    local host = util.get_server_host()  -- 获取请求头中Host字段
-    ngx.var.target = string.format("proxy_%s", host)
-    if host and _M.bad_guy_check() then
-        ngx.var.target = string.format("unreal_%s", host)
-    end
-end
-]]
-
 -- 加入频率控制函数
 -- 若返回假数据，将跳过后续检查流程
 function _M.frequency_control_check()
@@ -317,7 +301,6 @@ function _M.check()
         return
     end
     if     _M.frequency_control_check() then
-    -- if     _M.white_ip_check() then
     elseif _M.white_ip_check() then
     elseif _M.black_ip_check() then
     elseif _M.user_agent_attack_check() then

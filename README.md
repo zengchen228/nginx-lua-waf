@@ -146,7 +146,7 @@ curl http://127.0.0.1/test.zip
 - 使用前请检查过滤规则是否符合自己实际情况，根据实际增删条目，防止误伤
 - 规则文件除frequency.rule外全部为正则表达式，除frequency.rule、whiteip.rule、blackip.rule、whiteurl.rule外全部不区分大小写
 - 规则文件中以"--"开头的为注释内容，除最后一行外，不能留有空行，且结尾字符应为LF
-- 在用于生产环境时，可先将模式设置为jinghuashuiyue并检查拦截日志，确认有无误伤，该模式仅记录日志，不实际进行拦截(对IP黑名单和CC攻击过滤不适用，详见处理流程图)
+- 在用于生产环境时，可先将模式设置为log并检查拦截日志，确认有无误伤，该模式仅记录日志，不实际进行拦截
 - 更新规则文件后，使用reload命令(/usr/local/openresty/nginx/sbin/nginx -s reload)使用配置生效，该命令不会中断服务，不建议使用restart
 - 部署过程中对openresty的安装使用的是默认选项，如果需要自定义，可以参考我的博文:[编译Nginx(OpenResty)支持Lua扩展](http://pdf.us/2018/03/19/742.html)
 

@@ -76,8 +76,8 @@ local _M = {
 --10WAF处理:跳转/html/仅日志
     -- POST过滤开关
     config_post_check = "on",
-    -- 处理方式 redirect/html/jinghuashuiyue  jinghuashuiyue只记录日志
-    config_waf_model = "html",
+    -- 处理方式 redirect/html/log  log只记录日志
+    config_waf_model = "log",
     -- 当配置为redirect时跳转到的URL
     config_waf_redirect_url = "http://www.baidu.com",
     -- bad_guys过期时间

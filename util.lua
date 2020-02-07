@@ -109,6 +109,7 @@ function _M.log_record(config_log_dir, attack_type, url, data, ruletag)
         url = ngx.var.uri,
         postdata = data,
         ruletag = ruletag,
+        waf_mode = config.config_waf_model,
     }
     local log_line = cjson.encode(log_json_obj)
     -- log_line = string.gsub(log_line,"\\\"","")   -- 去掉所有\"
@@ -125,14 +126,14 @@ function _M.log_record(config_log_dir, attack_type, url, data, ruletag)
 end
 
 -- 恶意访问处理函数
--- 使用jinghuashuiyue模式时，仅记录ip到共享存储
+-- 使用log模式时，仅记录ip到共享存储
 function _M.waf_output()
     if config.config_waf_model == "redirect" then
         ngx.redirect(config.config_waf_redirect_url, 301)
-    elseif config.config_waf_model == "jinghuashuiyue" then
+    elseif config.config_waf_model == "log" then
         -- 如果启用镜花水月，取消下面两行的注释
-        -- local bad_guy_ip = _M.get_client_ip()
-        --_M.set_bad_guys(bad_guy_ip, config.config_expire_time)
+        local bad_guy_ip = _M.get_client_ip()
+        _M.set_bad_guys(bad_guy_ip, config.config_expire_time)
         return  -- 如果启用镜花水月 请注释该行
     else
         ngx.header.content_type = "text/html"
@@ -142,25 +143,33 @@ function _M.waf_output()
     end
 end
 
---[[
 -- 获取请求头中Host字段
--- 镜花水月模式中使用
 function _M.get_server_host()
     local host = ngx.req.get_headers()["Host"]
     return host
 end
 
 -- 将IP存入共享存储gadGuys
--- 镜花水月模式
 function _M.set_bad_guys(bad_guy_ip, expire_time)
     local badGuys = ngx.shared.badGuys
-    local req, _ = badGuys:get(bad_guy_ip)
-    if req then
+    local ret, _ = badGuys:get(bad_guy_ip)
+    if ret then
         badGuys:incr(bad_guy_ip, 1)
     else
-        badGuys:set(bad_guy_ip, 1, expire_time)
+        badGuys:safe_set(bad_guy_ip, 1, expire_time)
     end
 end
-]]
+
+-- 检查来访IP是否为标记过的恶意IP
+function _M.bad_guy_check()
+    local badGuys = ngx.shared.badGuys
+    local ret, _ = badGuys:get(_M.get_client_ip())
+    if client_ip ~= "" then
+        if ret ~= nil and ret > 0 then
+            return true
+        end
+    end
+    return false
+end
 
 return _M
