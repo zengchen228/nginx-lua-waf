@@ -113,14 +113,18 @@ cp -r nginx-lua-waf /usr/local/openresty/nginx/conf
 #在nginx.conf中添加配置
 vi /usr/local/openresty/nginx/conf/nginx.conf
 在http级别添加以下内容:
-    #nginx-lua-waf配置
+    # lua配置
+    lua_code_cache on;
+    lua_load_resty_core off;
+
+    # nginx-lua-waf配置
     lua_package_path "/usr/local/openresty/nginx/conf/nginx-lua-waf/?.lua;";
     lua_shared_dict limit 100m;
-    #开启lua代码缓存功能
-    lua_code_cache on;
+    lua_shared_dict badGuys 100m;
     lua_regex_cache_max_entries 4096;
     init_by_lua_file   /usr/local/openresty/nginx/conf/nginx-lua-waf/init.lua;
     access_by_lua_file /usr/local/openresty/nginx/conf/nginx-lua-waf/access.lua;
+
 在server级别修改server_name:
     #在每个vhost中(server级别)定义server_name时，建议设置一个以上的主机名，默认第一个将做为规则中的主机区别标志，例如
     server_name  api api.test.com;
